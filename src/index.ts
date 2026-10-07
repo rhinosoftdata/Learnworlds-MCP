@@ -272,7 +272,7 @@ async function runHttp(tools: ToolDefinition[], config: ReturnType<typeof loadCo
       const provided = bearerFrom(raw).trim();
       console.error(
         `Auth rejected: header=${raw === undefined ? "missing" : "present"}` +
-          ` scheme=${raw === undefined ? "-" : /^Bearer\s/i.test(raw) ? "Bearer" : "other"}` +
+          ` scheme=${raw === undefined ? "-" : /^\s*Bearer\s/i.test(raw) ? "Bearer" : /^\s*Bearer/i.test(raw) ? "Bearer-no-space" : "other"}` +
           ` length=${provided.length} expected=${cfg.authToken.trim().length}` +
           ` ua=${String(req.headers["user-agent"] ?? "-").slice(0, 40)}`,
       );

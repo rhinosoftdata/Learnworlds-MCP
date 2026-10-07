@@ -262,3 +262,10 @@ describe("hostAllowed", () => {
     expect(hostAllowed("http://nope", list)).toBe(false);
   });
 });
+
+describe("bearerFrom without the space", () => {
+  it("accepts a token glued to the scheme, as some header fields send it", () => {
+    expect(bearerFrom("Bearer0a1b2c")).toBe("0a1b2c");
+    expect(bearerFrom("  Bearer 0a1b2c  ")).toBe("0a1b2c ".trim());
+  });
+});

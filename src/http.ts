@@ -247,8 +247,11 @@ export function tokenMatches(provided: string, expected: string): boolean {
   return timingSafeEqual(a, b);
 }
 
+// The space after "Bearer" is optional: some clients' header fields drop it,
+// sending "Bearer<token>". The token is hex, so it can never itself start
+// with "Bearer" and the prefix is unambiguous.
 export function bearerFrom(header: string | undefined): string {
-  return (header ?? "").replace(/^Bearer\s+/i, "");
+  return (header ?? "").trim().replace(/^Bearer\s*/i, "");
 }
 
 /**
