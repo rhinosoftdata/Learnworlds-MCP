@@ -255,12 +255,27 @@ async function runHttp(tools: ToolDefinition[], config: ReturnType<typeof loadCo
     }
 
     if (!isMcpPath) {
-      send(res, 404, rpcError(-32601, `Not found. MCP endpoint is ${cfg.path}`));
+      // The path is not echoed back: if it ever carries a secret, a 404 must not reveal it.
+      send(res, 404, rpcError(-32601, "Not found."));
       return;
     }
 
     // 2. Shared secret, still before the body is read.
-    if (cfg.authToken && !tokenMatches(bearerFrom(req.headers.authorization), cfg.authToken)) {
+    // Leading/trailing whitespace is trimmed on both sides: a token pasted into a
+    // client's header field often carries an invisible space or newline, and
+    // rejecting it gives the operator no way to see why.
+    if (cfg.authToken && !tokenMatches(bearerFrom(req.headers.authorization).trim(), cfg.authToken.trim())) {
+      // Diagnostics only, never the value: whether the header arrived, its scheme
+      // and the token length, so a misconfigured client can be told apart from a
+      // wrong token without exposing either.
+      const raw = req.headers.authorization;
+      const provided = bearerFrom(raw).trim();
+      console.error(
+        `Auth rejected: header=${raw === undefined ? "missing" : "present"}` +
+          ` scheme=${raw === undefined ? "-" : /^Bearer\s/i.test(raw) ? "Bearer" : "other"}` +
+          ` length=${provided.length} expected=${cfg.authToken.trim().length}` +
+          ` ua=${String(req.headers["user-agent"] ?? "-").slice(0, 40)}`,
+      );
       send(res, 401, rpcError(-32001, "Unauthorized"));
       return;
     }
